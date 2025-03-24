@@ -70,8 +70,16 @@ function App() {
         </p>
       )}
 
+      {/* Horizontal Line above Shuttle Bus Section */}
+      <hr className="my-4 border-gray-300" />
+
+      {/* Bus Section */}
       <div className="bg-white shadow-md rounded-2xl p-4 mb-4">
-        <h2 className="text-lg font-semibold mb-2">🚌 Next 5 Shuttle Buses - Ma Wan to Tsing Yi</h2>
+        <h2 className="text-lg font-semibold mb-2">
+          🚌 Bus - Ma Wan to Tsing Yi
+        </h2>
+        <p className="text-xl font-bold text-blue-600 mb-4">Next 5 Shuttle Buses</p>
+        <hr className="my-2 border-gray-300" />
         {nextBuses.length > 0 ? (
           nextBuses.map((bus, index) => (
             <div key={index} className="mb-2">
@@ -84,8 +92,16 @@ function App() {
         )}
       </div>
 
+      {/* Horizontal Line above Train Section */}
+      <hr className="my-4 border-gray-300" />
+
+      {/* Train Section */}
       <div className="bg-white shadow-md rounded-2xl p-4">
-        <h2 className="text-lg font-semibold mb-2">🚆 Next 4 Trains - Tsing Yi to Hong Kong Station</h2>
+        <h2 className="text-lg font-semibold mb-2">
+          🚆 Train - Tsing Yi to Hong Kong Station
+        </h2>
+        <p className="text-xl font-bold text-blue-600 mb-4">Next 4 Trains</p>
+        <hr className="my-2 border-gray-300" />
         {mtrTimes.length > 0 ? (
           mtrTimes.map((train, i) => (
             <div key={i} className="mb-2">
