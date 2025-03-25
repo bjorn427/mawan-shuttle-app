@@ -34,10 +34,10 @@ function App() {
   }, [now])
 
   useEffect(() => {
-    fetch('https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TCL&sta=TUC&lang=en')
+    fetch('https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TCL&sta=TSY&lang=en') // Updated to TSY for Tsing Yi
       .then(res => res.json())
       .then(data => {
-        const downList = data?.data?.['TCL-TUC']?.DOWN || []
+        const downList = data?.data?.['TCL-TSY']?.DOWN || [] // Ensure the correct source for Tsing Yi
         const validTrains = downList.filter(train => train.dest === 'HOK' && train.valid === 'Y')
 
         const formatted = validTrains.map(train => {
@@ -56,13 +56,13 @@ function App() {
         console.error('❌ Failed to fetch MTR data:', err)
         setMtrTimes([])
       })
-  }, [])
+  }, [now])
 
   const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'long' })
 
   return (
     <main className="p-4 max-w-md mx-auto text-center">
-      <h1 className="text-2xl font-bold mb-2">Ma Wan → Tsing Yi</h1>
+      <h1 className="text-2xl font-bold mb-2">Tsing Yi → Hong Kong</h1>
       <p className="text-sm text-gray-600 mb-1">⏰ {now.toLocaleDateString()} ({dayOfWeek}), {now.toLocaleTimeString()}</p>
       {lastUpdated && (
         <p className="text-xs text-gray-400 mb-4">
@@ -114,3 +114,4 @@ function App() {
 }
 
 export default App
+
