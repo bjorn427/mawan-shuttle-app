@@ -57,7 +57,7 @@ function formatCountdown(mins) {
 function App() {
   const [nextBuses, setNextBuses] = useState([])
   const [now, setNow] = useState(new Date())
-  const [mtrTimes, setMtrTimes] = useState({ heading: [], coming: [] })
+  const [mtrTimes, setMtrTimes] = useState([])
   const [lastUpdated, setLastUpdated] = useState(null)
   const [selectedLine, setSelectedLine] = useState('TCL')
   const [selectedStation, setSelectedStation] = useState('TSY')
@@ -79,35 +79,24 @@ function App() {
       .then(res => res.json())
       .then(data => {
         const downList = data?.data?.[`${selectedLine}-${selectedStation}`]?.DOWN || []
-        const upList = data?.data?.[`${selectedLine}-${selectedStation}`]?.UP || []
         
         const validDownTrains = downList.filter(train => train.valid === 'Y')
-        const validUpTrains = upList.filter(train => train.valid === 'Y')
 
         const formattedDown = validDownTrains.map(train => {
           const [dateStr, timeStr] = train.time.split(' ')
           const trainTime = new Date(`${dateStr}T${timeStr}`)
           return {
-            display: `${timeStr.substring(0, 5)}`,
+            display: `${timeStr.substring(0, 5)} (Towards ${train.dest})`,
             countdown: minutesUntil(trainTime, new Date())
           }
         })
 
-        const formattedUp = validUpTrains.map(train => {
-          const [dateStr, timeStr] = train.time.split(' ')
-          const trainTime = new Date(`${dateStr}T${timeStr}`)
-          return {
-            display: `${timeStr.substring(0, 5)}`,
-            countdown: minutesUntil(trainTime, new Date())
-          }
-        })
-
-        setMtrTimes({ heading: formattedUp.slice(0, 4), coming: formattedDown.slice(0, 4) })
+        setMtrTimes(formattedDown.slice(0, 4))
         setLastUpdated(new Date())
       })
       .catch(err => {
         console.error('❌ Failed to fetch MTR data:', err)
-        setMtrTimes({ heading: [], coming: [] })
+        setMtrTimes([])
       })
   }, [selectedLine, selectedStation])
 
@@ -175,28 +164,15 @@ function App() {
 
         <h3 className="text-sm mb-2">Next Trains (Heading towards {selectedStation})</h3>
         <hr className="my-2 border-gray-300" />
-        {mtrTimes.heading.length > 0 ? (
-          mtrTimes.heading.map((train, i) => (
+        {mtrTimes.length > 0 ? (
+          mtrTimes.map((train, i) => (
             <div key={i} className="mb-2">
               <p>🚆 <strong>Train:</strong> {train.display} <span className="text-sm text-gray-500">({formatCountdown(train.countdown)})</span></p>
-              {i < mtrTimes.heading.length - 1 && <hr className="my-2 border-gray-300" />}
+              {i < mtrTimes.length - 1 && <hr className="my-2 border-gray-300" />}
             </div>
           ))
         ) : (
           <p className="text-xs">No trains heading towards {selectedStation} 🛤</p>
-        )}
-
-        <h3 className="text-sm mb-2">Next Trains (Coming from {selectedStation})</h3>
-        <hr className="my-2 border-gray-300" />
-        {mtrTimes.coming.length > 0 ? (
-          mtrTimes.coming.map((train, i) => (
-            <div key={i} className="mb-2">
-              <p>🚆 <strong>Train:</strong> {train.display} <span className="text-sm text-gray-500">({formatCountdown(train.countdown)})</span></p>
-              {i < mtrTimes.coming.length - 1 && <hr className="my-2 border-gray-300" />}
-            </div>
-          ))
-        ) : (
-          <p className="text-xs">No trains coming from {selectedStation} 🛤</p>
         )}
       </div>
     </main>
@@ -204,3 +180,4 @@ function App() {
 }
 
 export default App
+
