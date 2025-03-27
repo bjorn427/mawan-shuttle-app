@@ -2,6 +2,43 @@ import { useEffect, useState } from 'react'
 import schedule from './data/weekday.json'
 import { findNextShuttles } from './utils/findNextShuttle'
 
+const lines = {
+  TCL: {
+    name: 'Tung Chung Line',
+    stations: [
+      { code: 'HOK', name: 'Hong Kong' },
+      { code: 'KOW', name: 'Kowloon' },
+      { code: 'OLY', name: 'Olympic' },
+      { code: 'NAC', name: 'Nam Cheong' },
+      { code: 'LAK', name: 'Lai King' },
+      { code: 'TSY', name: 'Tsing Yi' },
+      { code: 'SUN', name: 'Sunny Bay' },
+      { code: 'TUC', name: 'Tung Chung' },
+    ]
+  },
+  TWL: {
+    name: 'Tsuen Wan Line',
+    stations: [
+      { code: 'CEN', name: 'Central' },
+      { code: 'ADM', name: 'Admiralty' },
+      { code: 'TST', name: 'Tsim Sha Tsui' },
+      { code: 'JOR', name: 'Jordan' },
+      { code: 'YMT', name: 'Yau Ma Tei' },
+      { code: 'MOK', name: 'Mong Kok' },
+      { code: 'PRE', name: 'Price Edward' },
+      { code: 'SSP', name: 'Sham Shui Po' },
+      { code: 'CSW', name: 'Cheung Sha Wan' },
+      { code: 'LCK', name: 'Lai Chi Kok' },
+      { code: 'MEF', name: 'Mei Foo' },
+      { code: 'LAK', name: 'Lai King' },
+      { code: 'KWF', name: 'Kwai Fong' },
+      { code: 'KWH', name: 'Kwai Hing' },
+      { code: 'TWH', name: 'Tai Wo Hau' },
+      { code: 'TSW', name: 'Tsuen Wan' },
+    ]
+  }
+}
+
 function formatTime(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
@@ -22,6 +59,9 @@ function App() {
   const [now, setNow] = useState(new Date())
   const [mtrTimes, setMtrTimes] = useState([])
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [selectedLine, setSelectedLine] = useState('TCL')
+  const [selectedStation, setSelectedStation] = useState('TSY')
+  const [favouriteStations, setFavouriteStations] = useState([])
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000)
@@ -34,11 +74,12 @@ function App() {
   }, [now])
 
   useEffect(() => {
-    fetch('https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TCL&sta=TSY&lang=en') // Updated to TSY for Tsing Yi
+    const line = lines[selectedLine]
+    fetch(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${selectedLine}&sta=${selectedStation}&lang=en`)
       .then(res => res.json())
       .then(data => {
-        const downList = data?.data?.['TCL-TSY']?.DOWN || [] // Ensure the correct source for Tsing Yi
-        const validTrains = downList.filter(train => train.dest === 'HOK' && train.valid === 'Y')
+        const downList = data?.data?.[`${selectedLine}-${selectedStation}`]?.DOWN || []
+        const validTrains = downList.filter(train => train.valid === 'Y')
 
         const formatted = validTrains.map(train => {
           const [dateStr, timeStr] = train.time.split(' ')
@@ -56,13 +97,28 @@ function App() {
         console.error('❌ Failed to fetch MTR data:', err)
         setMtrTimes([])
       })
-  }, [now])
+  }, [selectedLine, selectedStation])
+
+  const handleLineChange = (event) => {
+    setSelectedLine(event.target.value)
+    setSelectedStation(lines[event.target.value].stations[0].code)
+  }
+
+  const handleStationChange = (event) => {
+    setSelectedStation(event.target.value)
+  }
+
+  const handleFavourite = (stationCode) => {
+    if (!favouriteStations.includes(stationCode)) {
+      setFavouriteStations([...favouriteStations, stationCode])
+    }
+  }
 
   const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'long' })
 
   return (
     <main className="p-4 max-w-md mx-auto text-center">
-      <h1 className="text-2xl font-bold mb-2">Tsing Yi → Hong Kong</h1>
+      <h1 className="text-2xl font-bold mb-2">Ma Wan → Tsing Yi</h1>
       <p className="text-sm text-gray-600 mb-1">⏰ {now.toLocaleDateString()} ({dayOfWeek}), {now.toLocaleTimeString()}</p>
       {lastUpdated && (
         <p className="text-xs text-gray-400 mb-4">
@@ -70,14 +126,10 @@ function App() {
         </p>
       )}
 
-      {/* Bus Section */}
       <div className="bg-white shadow-md rounded-2xl p-4 mb-4">
-        <h2 className="text-lg font-semibold mb-2">🚌 Bus - Ma Wan to Tsing Yi</h2>
-        <p className="text-sm text-gray-600 mb-2">Next 5 Shuttle Buses</p>
-
-        <hr className="my-4" />
-
-        {/* Display Next Buses */}
+        <h2 className="text-xl font-semibold mb-2">🚌 Bus - Ma Wan to Tsing Yi</h2>
+        <h3 className="text-sm mb-2">Next 5 Shuttle Buses</h3>
+        <hr className="my-2 border-gray-300" />
         {nextBuses.length > 0 ? (
           nextBuses.map((bus, index) => (
             <div key={index} className="mb-2">
@@ -86,18 +138,31 @@ function App() {
             </div>
           ))
         ) : (
-          <p>No more buses today 💤</p>
+          <p className="text-xs">No more buses today 💤</p>
         )}
       </div>
 
-      {/* Train Section */}
       <div className="bg-white shadow-md rounded-2xl p-4">
-        <h2 className="text-lg font-semibold mb-2">🚆 Train - Tsing Yi to Hong Kong Station</h2>
-        <p className="text-sm text-gray-600 mb-2">Next 4 Trains</p>
+        <h2 className="text-xl font-semibold mb-2">🚆 Train Schedule</h2>
 
-        <hr className="my-4" />
+        <h3 className="text-sm mb-2">Select MTR Line</h3>
+        <select onChange={handleLineChange} value={selectedLine} className="mb-2 p-2 w-full">
+          {Object.keys(lines).map((line) => (
+            <option key={line} value={line}>{lines[line].name}</option>
+          ))}
+        </select>
 
-        {/* Display Next Trains */}
+        <h3 className="text-sm mb-2">Select MTR Station</h3>
+        <select onChange={handleStationChange} value={selectedStation} className="mb-2 p-2 w-full">
+          {lines[selectedLine].stations.map(station => (
+            <option key={station.code} value={station.code}>
+              {station.name}
+            </option>
+          ))}
+        </select>
+
+        <h3 className="text-sm mb-2">Next Trains (Heading towards {selectedStation})</h3>
+        <hr className="my-2 border-gray-300" />
         {mtrTimes.length > 0 ? (
           mtrTimes.map((train, i) => (
             <div key={i} className="mb-2">
@@ -106,7 +171,7 @@ function App() {
             </div>
           ))
         ) : (
-          <p>No MTR trains available 🛤</p>
+          <p className="text-xs">No trains available 🛤</p>
         )}
       </div>
     </main>
