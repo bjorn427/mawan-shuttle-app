@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import schedule from './data/weekday.json'
 import { findNextShuttles } from './utils/findNextShuttle'
 
+// Define your station data
 const lines = {
   TCL: {
     name: 'Tung Chung Line',
@@ -79,8 +80,10 @@ function App() {
       .then(res => res.json())
       .then(data => {
         const downList = data?.data?.[`${selectedLine}-${selectedStation}`]?.DOWN || []
-        
+        const upList = data?.data?.[`${selectedLine}-${selectedStation}`]?.UP || []
+
         const validDownTrains = downList.filter(train => train.valid === 'Y')
+        const validUpTrains = upList.filter(train => train.valid === 'Y')
 
         const formattedDown = validDownTrains.map(train => {
           const [dateStr, timeStr] = train.time.split(' ')
@@ -91,12 +94,21 @@ function App() {
           }
         })
 
-        setMtrTimes(formattedDown.slice(0, 4))
+        const formattedUp = validUpTrains.map(train => {
+          const [dateStr, timeStr] = train.time.split(' ')
+          const trainTime = new Date(`${dateStr}T${timeStr}`)
+          return {
+            display: `${timeStr.substring(0, 5)} (Towards ${train.dest})`,
+            countdown: minutesUntil(trainTime, new Date())
+          }
+        })
+
+        setMtrTimes({ down: formattedDown.slice(0, 4), up: formattedUp.slice(0, 4) })
         setLastUpdated(new Date())
       })
       .catch(err => {
         console.error('❌ Failed to fetch MTR data:', err)
-        setMtrTimes([])
+        setMtrTimes({ down: [], up: [] })
       })
   }, [selectedLine, selectedStation])
 
@@ -162,17 +174,30 @@ function App() {
           ))}
         </select>
 
-        <h3 className="text-sm mb-2">Next Trains (Heading towards {selectedStation})</h3>
+        <h3 className="text-sm mb-2">Next Trains (Heading towards {lines[selectedLine].stations.find(station => station.code === selectedStation).name})</h3>
         <hr className="my-2 border-gray-300" />
-        {mtrTimes.length > 0 ? (
-          mtrTimes.map((train, i) => (
+        {mtrTimes.down.length > 0 ? (
+          mtrTimes.down.map((train, i) => (
             <div key={i} className="mb-2">
               <p>🚆 <strong>Train:</strong> {train.display} <span className="text-sm text-gray-500">({formatCountdown(train.countdown)})</span></p>
-              {i < mtrTimes.length - 1 && <hr className="my-2 border-gray-300" />}
+              {i < mtrTimes.down.length - 1 && <hr className="my-2 border-gray-300" />}
             </div>
           ))
         ) : (
           <p className="text-xs">No trains heading towards {selectedStation} 🛤</p>
+        )}
+
+        <h3 className="text-sm mb-2">Next Trains (Coming from {lines[selectedLine].stations.find(station => station.code === selectedStation).name})</h3>
+        <hr className="my-2 border-gray-300" />
+        {mtrTimes.up.length > 0 ? (
+          mtrTimes.up.map((train, i) => (
+            <div key={i} className="mb-2">
+              <p>🚆 <strong>Train:</strong> {train.display} <span className="text-sm text-gray-500">({formatCountdown(train.countdown)})</span></p>
+              {i < mtrTimes.up.length - 1 && <hr className="my-2 border-gray-300" />}
+            </div>
+          ))
+        ) : (
+          <p className="text-xs">No trains coming from {selectedStation} 🛤</p>
         )}
       </div>
     </main>
@@ -180,4 +205,5 @@ function App() {
 }
 
 export default App
+
 
