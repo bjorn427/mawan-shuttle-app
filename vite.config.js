@@ -1,4 +1,3 @@
-// vite.config.js
 export default {
-  base: '',
+  base: '', // Vercel needs base to be empty
 };
